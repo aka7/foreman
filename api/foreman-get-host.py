@@ -46,7 +46,7 @@ parser.add_option("-D", "--debug",
                   help="print debug informaiton")
 parser.add_option("-v", "--verbose",
                   action="store_true", dest="verbose", default=False,
-                  help="don't print status messages to stdout")
+                  help="print status messages to stdout")
 
 (options, args) = parser.parse_args()
 
