@@ -80,47 +80,47 @@ def getPasswd():
 	return password
 
 def getPage(theurl):
-	global username,password
-	if (username == None):
-		username = raw_input("Enter username :")
-	if (password == None):
-		password = getpass.getpass("Enter your password for user ["+username+"] :")
-	
-	req = urllib2.Request(theurl)
-	try:
-		handle = urllib2.urlopen(req)
-	except IOError, e:
+  global username,password
+  if (username == None):
+    username = raw_input("Enter username :")
+  if (password == None):
+    password = getpass.getpass("Enter your password for user ["+username+"] :")
+  
+  req = urllib2.Request(theurl)
+  try:
+      handle = urllib2.urlopen(req)
+  except IOError, e:
 	    # here we *want* to fail
 	    pass
-	else:
+  else:
 	    # If we don't fail then the page isn't protected
 	    print "This page isn't protected by authentication."
 	    sys.exit(1)
 
-	if not hasattr(e, 'code') or e.code != 401:
+  if not hasattr(e, 'code') or e.code != 401:
 	    # we got an error - but not a 401 error
 	    print "This page isn't protected by authentication."
 	    print 'But we failed for another reason.'
 	    print e
 	    sys.exit(1)
 
-	base64string = base64.encodestring(
+  base64string = base64.encodestring(
                 '%s:%s' % (username, password))[:-1]
-	authheader =  "Basic %s" % base64string
-	req.add_header("Authorization", authheader)
-	try:
+  authheader =  "Basic %s" % base64string
+  req.add_header("Authorization", authheader)
+  try:
 		handle = urllib2.urlopen(req)
-	except urllib2.HTTPError, err:
+  except urllib2.HTTPError, err:
 	    # here we shouldn't fail if the username/password is right
 	    if ( str(err.code) == "404" ):
 	    	print "Url not found : " + str(err.code)
 	    else:
 	    	print "It looks like the username or password is wrong. "  +str (err.code)
 	    sys.exit(1)
-	except IOError, e:
+  except IOError, e:
 		print "Something else went wrong"
-	thepage = handle.read()
-	return json.loads(thepage)
+  thepage = handle.read()
+  return json.loads(thepage)
 
 def getSubnets(theurl):
 	global username,password
