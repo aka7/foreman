@@ -3,8 +3,7 @@
 # Get host report status from foreman
 # using foreman api
 # export foreman_apibaseurl = https://<your_foreman_api_url>/api
-# abdul.karim@sky.uk
-# SNS
+# abdul.karim
 # v1.0
 import urllib2,urllib
 import sys, os
@@ -15,12 +14,15 @@ from optparse import OptionParser
 import getpass,socket
 import json, commands
 from netaddr import IPNetwork,IPAddress
-import ssl
 from datetime import datetime
 import dateutil.parser,pytz
-
+from foreman_common import getPasswd,getUsername,getBaseURL,getPage
 #some version of python fail on self sign ssl certs
-ssl._create_default_https_context = ssl._create_unverified_context
+if sys.version_info[0] == 2 and sys.version_info[1] > 6:
+	#version 2.7 of python fail on self sign ssl certs
+	import ssl
+	ssl._create_default_https_context = ssl._create_unverified_context
+
 
 DEBUG=False
 parser = OptionParser()
@@ -39,70 +41,6 @@ parser.add_option("-v", "--verbose",
 
 (options, args) = parser.parse_args()
 
-
-
-def getBaseURL():
-	apiBaseURL=os.getenv("foreman_apibaseurl")
-	if apiBaseURL == None:
-		print "couldn't determine base api url. sent env foreman_apibaseurl"
-		sys.exit(0)	
-	return apiBaseURL
-def getUsername():
-	# get username and passsword
-	username=os.getenv("foreman_user")
-	if (username == None):
-		username = raw_input("Enter cauth username :")
-	return username
-def getPasswd():
-	# get username and passsword
-	password=os.getenv("foreman_pw")
-	if (password == None):
-		password = getpass.getpass("Enter your password for user ["+username+"] :")
-	return password
-
-def getPage(theurl):
-  global username,password
-  if (username == None):
-		username = raw_input("Enter username :")
-  if (password == None):
-		password = getpass.getpass("Enter your password for user ["+username+"] :")
-	
-  req = urllib2.Request(theurl)
-  try:
-		handle = urllib2.urlopen(req)
-  except IOError, e:
-	    # here we *want* to fail
-	    pass
-  else:
-	    # If we don't fail then the page isn't protected
-	    print "This page isn't protected by authentication."
-	    sys.exit(1)
-
-  if not hasattr(e, 'code') or e.code != 401:
-	    # we got an error - but not a 401 error
-	    print "This page isn't protected by authentication."
-	    print 'But we failed for another reason.'
-	    print e
-	    sys.exit(1)
-
-  base64string = base64.encodestring(
-                '%s:%s' % (username, password))[:-1]
-  authheader =  "Basic %s" % base64string
-  req.add_header("Authorization", authheader)
-  try:
-		handle = urllib2.urlopen(req)
-  except urllib2.HTTPError, err:
-	    # here we shouldn't fail if the username/password is right
-	    if ( str(err.code) == "404" ):
-	    	print "Url not found : " + str(err.code)
-	    else:
-	    	print "It looks like the username or password is wrong. "  +str (err.code)
-	    sys.exit(1)
-  except IOError, e:
-		print "Something else went wrong"
-  thepage = handle.read()
-  return json.loads(thepage)
-
 if __name__ == '__main__':
 
   # set api uri
@@ -120,8 +58,8 @@ if __name__ == '__main__':
   if options.debug:
   	DEBUG=True
   username=getUsername()
-  password=getPasswd()
-  thepage=getPage(searchurl)
+  password=getPasswd(username)
+  thepage=getPage(searchurl,username,password)
   if DEBUG:
     print json.dumps(thepage,indent=4)
   print msg
